@@ -2,6 +2,7 @@
 
 import sys, re, shutil, os, hashlib
 import imp
+import importlib
 import getpass
 
 if __name__ == '__main__':
@@ -19,24 +20,41 @@ if __name__ == '__main__':
         'pbkdf2',
         'requests', # note: requests-2.5.1 is needed to build with pyinstaller
         'qrcode',
-        'google/protobuf',
-        'dns',
+        # 'google.protobuf',
+        # 'dns',
         'six',
         'jsonrpclib',
         'socks',
     ]
     for module in deps:
-        f, pathname, descr = imp.find_module(module)
+        moduleObj = importlib.import_module(module)
+        # f = moduleObj.__file__
+        # try:
+        #     _, pathname, descr = imp.find_module(module)
+        # except ImportError:
+        # f = moduleObj.__file__
+        pathname =  moduleObj.__name__
+        descr = ('.py', '', 5)
+        # print "__file__ =", moduleObj.__file__
+        print "__name__ =", moduleObj.__name__
+        # else:
+        #     # assert f == moduleObj.__file__
+        #     # assert pathname == moduleObj.__name__
+        #     # print "f =", f, ", __file__ =", moduleObj.__file__
+        #     print "pathname =", pathname, ", __name__ =", moduleObj.__name__
+        #     print 'descr = %s' % (descr,)
         target = 'packages/' + module + descr[0]
         if os.path.exists(target):
             continue
         d = os.path.dirname(target)
         if d and not (os.path.exists(d)):
             os.makedirs(d)
-        if descr[0]:
+        if os.path.isfile(pathname):
             shutil.copy(pathname, target)
-        else:
+        if os.path.isdir(pathname):
             shutil.copytree(pathname, target, ignore=shutil.ignore_patterns('*.pyc'))
+        else:
+            raise IOError("no such file or directory: %r")
 
     # fix google/__init__.py needed by pyinstaller
     n = 'packages/google/__init__.py'
